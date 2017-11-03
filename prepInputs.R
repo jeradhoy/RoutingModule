@@ -1,37 +1,14 @@
 library(rgdal)
 
-
 load_all("msuwcRouting")
+
 #load("RData/tempDataProcessed2-26-16.RData")
 
 options(scipen=999)
 setupList <- source("routingDefaults3-26-16.R")
 
 
-########################################################
-# Rest of script should not need configuration
-# Run lines sequentially
-#
-# May want to CHECK data at each step to make sure it is working properly
-#######################################################
 
-
-
-
-# Catchment polygons shapefile created with ArcHydro
-# Refer to arcHydroNotes.docx for instructions on how to create # Refer to arcHydroNotes.docx for instructions on how to create
-catchmentFileDir <- "/Users/hoy/Desktop/MSUWC/Data/Shapefiles/GYE_Cathments_Clipped/"
-catchmentFileName <- "GYE_Cathments_Clipped"
-
-# DrainageLine shapefile created with ArcHydro
-# Refer to arcHydroNotes.docx for instructions on how to create
-edgeFileDir <- "/Users/hoy/Desktop/MSUWC/Data/Shapefiles/GYE_DrainageLine2/"
-edgeFileName <- "GYE_DrainageLine2"
-
-# LPJ-Guess outputs of surface and subsurface runoff
-ncdir <- "/Users/hoy/Desktop/MSUWC/Data/DriverData/GYE_Daymet_Paper_Outputs/"
-surfaceNcName <- "GYE_Daymet_Paper_stand_monthly_msro.nc"
-subNcName <- "GYE_Daymet_Paper_stand_monthly_mssro.nc"
 snowpackNcName <- "GYE_Daymet_Paper_stand_monthly_spack.nc"
 precipNcName  <- "GYE_Daymet_Paper_stand_monthly_prcp.nc"
 
@@ -39,30 +16,6 @@ precipNcName  <- "GYE_Daymet_Paper_stand_monthly_prcp.nc"
 # Refer to arcHydroNotes.docx for instructions on how to create
 nwisGaugeDir <- "/Data/Lab/MSUWC/Data/Shapefiles/nwisGauges/"
 nwisGaugeFname <- "NWISMapperExport"
-
-###########
-# Set edge and catchment table field names
-###########
-
-# Set the names of the edge fields to be used
-edgeIdField <- "DrainID"
-edgeOrderField <- "RiverOrder"
-edgeLengthField <- "Shape_Leng"
-edgeAreaField <- "Shape_Ar_1"
-edgeHucField <- "HUC10"
-edgeNextDownField <- "NextDown_2"
-edgeslopefielddeg <- "slope"
-
-
-# set the names of the catchment fields to be used
-catchAreaField <- "shape_area"
-catchIdField <- "hydroid"
-catchNextdownField <- "nextdownid"
-catchOrderField <- "riverorder"
-catchHucField <- #unnessary if subsetting with edges
-
-## note: edgeidfield and catchidfield are linked and must be the same for corresponding edges and nodes
-
 
 ###########
 # set simulations information
@@ -162,9 +115,7 @@ runOnHyalite("tmeanStats", objs=c("tmean"), packages=c("raster"), oneLine=T)
 catchmentsToUse <- catchmentsInBounds
 
   
-surfaceRunoff <- AggregateRunoff(ncFile=paste(ncdir, "/",  surfaceNcName, sep=""), catchmentPolygons=catchmentsToUse, useWeights=T, runoffVar=surfaceVarName, startDate=simStartDate, by=timeStep)
-  
-subsurfRunoff <- AggregateRunoff(ncFile=paste(ncdir, "/",  subNcName, sep=""), catchmentPolygons=catchmentsToUse, useWeights=T, runoffVar=subsurfVarName, startDate=simStartDate, by=timeStep)
+
   
 
 precip <- AggregateRunoff(ncFile=paste(ncdir, "/", precipNcName, sep=""), catchmentPolygons=catchmentsToUse, runoffVar=precipVarName, startDate=simStartDate, by=timeStep, convertToDischarge=F, useWeights=T)

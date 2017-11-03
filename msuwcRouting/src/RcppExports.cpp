@@ -7,7 +7,7 @@ using namespace Rcpp;
 
 // routeWaterLoop
 List routeWaterLoop(int timeLength, CharacterVector edgeIDs, IntegerVector orders, NumericVector streamLengths, NumericVector streamWidths, NumericVector streamSlopes, NumericVector aCoeffs, NumericMatrix Rsurf, NumericMatrix Rsub, String by, List parentList, int spinUpYears, int spinUpCycles, double manningN, NumericVector vMonthConv, NumericVector beaverCoeff, NumericVector hillslopeLengths);
-RcppExport SEXP msuwcRouting_routeWaterLoop(SEXP timeLengthSEXP, SEXP edgeIDsSEXP, SEXP ordersSEXP, SEXP streamLengthsSEXP, SEXP streamWidthsSEXP, SEXP streamSlopesSEXP, SEXP aCoeffsSEXP, SEXP RsurfSEXP, SEXP RsubSEXP, SEXP bySEXP, SEXP parentListSEXP, SEXP spinUpYearsSEXP, SEXP spinUpCyclesSEXP, SEXP manningNSEXP, SEXP vMonthConvSEXP, SEXP beaverCoeffSEXP, SEXP hillslopeLengthsSEXP) {
+RcppExport SEXP _msuwcRouting_routeWaterLoop(SEXP timeLengthSEXP, SEXP edgeIDsSEXP, SEXP ordersSEXP, SEXP streamLengthsSEXP, SEXP streamWidthsSEXP, SEXP streamSlopesSEXP, SEXP aCoeffsSEXP, SEXP RsurfSEXP, SEXP RsubSEXP, SEXP bySEXP, SEXP parentListSEXP, SEXP spinUpYearsSEXP, SEXP spinUpCyclesSEXP, SEXP manningNSEXP, SEXP vMonthConvSEXP, SEXP beaverCoeffSEXP, SEXP hillslopeLengthsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -34,7 +34,7 @@ END_RCPP
 }
 // routeWaterLoopImprov
 List routeWaterLoopImprov(int timeLength, CharacterVector edgeIDs, IntegerVector orders, NumericVector streamLengths, NumericVector streamWidths, NumericVector streamSlopes, NumericVector aCoeffs, NumericMatrix Rsurf, NumericMatrix Rsub, String by, List parentList, int spinUpYears, int spinUpCycles, double manningN, NumericVector vMonthConv, double beaverCoeff, NumericVector hillslopeLengths);
-RcppExport SEXP msuwcRouting_routeWaterLoopImprov(SEXP timeLengthSEXP, SEXP edgeIDsSEXP, SEXP ordersSEXP, SEXP streamLengthsSEXP, SEXP streamWidthsSEXP, SEXP streamSlopesSEXP, SEXP aCoeffsSEXP, SEXP RsurfSEXP, SEXP RsubSEXP, SEXP bySEXP, SEXP parentListSEXP, SEXP spinUpYearsSEXP, SEXP spinUpCyclesSEXP, SEXP manningNSEXP, SEXP vMonthConvSEXP, SEXP beaverCoeffSEXP, SEXP hillslopeLengthsSEXP) {
+RcppExport SEXP _msuwcRouting_routeWaterLoopImprov(SEXP timeLengthSEXP, SEXP edgeIDsSEXP, SEXP ordersSEXP, SEXP streamLengthsSEXP, SEXP streamWidthsSEXP, SEXP streamSlopesSEXP, SEXP aCoeffsSEXP, SEXP RsurfSEXP, SEXP RsubSEXP, SEXP bySEXP, SEXP parentListSEXP, SEXP spinUpYearsSEXP, SEXP spinUpCyclesSEXP, SEXP manningNSEXP, SEXP vMonthConvSEXP, SEXP beaverCoeffSEXP, SEXP hillslopeLengthsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -61,7 +61,7 @@ END_RCPP
 }
 // streamTempLoop
 List streamTempLoop(int timeLength, CharacterVector edgeIDs, IntegerVector orders, NumericMatrix velocities, NumericVector lengths, NumericMatrix RsurfSnow, NumericMatrix RsurfNoSnow, NumericMatrix flowqSub, NumericMatrix flowqOut, NumericMatrix flowqIn, NumericMatrix flowsRiv, NumericVector annualTmean, String by, List parentList, double K, NumericMatrix Tair);
-RcppExport SEXP msuwcRouting_streamTempLoop(SEXP timeLengthSEXP, SEXP edgeIDsSEXP, SEXP ordersSEXP, SEXP velocitiesSEXP, SEXP lengthsSEXP, SEXP RsurfSnowSEXP, SEXP RsurfNoSnowSEXP, SEXP flowqSubSEXP, SEXP flowqOutSEXP, SEXP flowqInSEXP, SEXP flowsRivSEXP, SEXP annualTmeanSEXP, SEXP bySEXP, SEXP parentListSEXP, SEXP KSEXP, SEXP TairSEXP) {
+RcppExport SEXP _msuwcRouting_streamTempLoop(SEXP timeLengthSEXP, SEXP edgeIDsSEXP, SEXP ordersSEXP, SEXP velocitiesSEXP, SEXP lengthsSEXP, SEXP RsurfSnowSEXP, SEXP RsurfNoSnowSEXP, SEXP flowqSubSEXP, SEXP flowqOutSEXP, SEXP flowqInSEXP, SEXP flowsRivSEXP, SEXP annualTmeanSEXP, SEXP bySEXP, SEXP parentListSEXP, SEXP KSEXP, SEXP TairSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -84,4 +84,16 @@ BEGIN_RCPP
     rcpp_result_gen = Rcpp::wrap(streamTempLoop(timeLength, edgeIDs, orders, velocities, lengths, RsurfSnow, RsurfNoSnow, flowqSub, flowqOut, flowqIn, flowsRiv, annualTmean, by, parentList, K, Tair));
     return rcpp_result_gen;
 END_RCPP
+}
+
+static const R_CallMethodDef CallEntries[] = {
+    {"_msuwcRouting_routeWaterLoop", (DL_FUNC) &_msuwcRouting_routeWaterLoop, 17},
+    {"_msuwcRouting_routeWaterLoopImprov", (DL_FUNC) &_msuwcRouting_routeWaterLoopImprov, 17},
+    {"_msuwcRouting_streamTempLoop", (DL_FUNC) &_msuwcRouting_streamTempLoop, 16},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_msuwcRouting(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
 }

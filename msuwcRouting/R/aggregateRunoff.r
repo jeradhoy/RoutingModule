@@ -96,3 +96,17 @@ AggregateRunoff <- function(ncFile, catchmentPolygons, runoffVar, useWeights=F, 
 
     return(runoff)
 }
+
+AggregateMonthlyRunoff <- function(ncFile, streamNet, startDate){
+
+    # Create Raster brick from NC file
+    rastStack <- raster::stack(ncFile)
+    rastVelox <- velox::velox(rastStack)
+    
+    aggVals <- data.frame(t(data.frame(rastVelox$extract(sp=streamNet$catchments, fun=sum))))
+    
+    colnames(aggVals) <- streamNet$data$ID
+    rownames(aggVals) <- zoo::as.yearmon(seq(as.Date(startDate), by="month", length.out = nrow(aggVals)))
+
+    return(aggVals)
+}

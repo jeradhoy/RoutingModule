@@ -65,7 +65,7 @@ List routeWaterLoop(int timeLength,
 					vConvFactor = 60*60*24/1000;
 				}
 				
-				Rcpp::checkUserInterrupt()
+				Rcpp::checkUserInterrupt();
 
 			for(int i=0; i < edgeIDs.size(); i++){
 

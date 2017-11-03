@@ -3,5 +3,6 @@
 .RData
 .Ruserdata
 Data
+NewData
 Plots
 *.Rproj

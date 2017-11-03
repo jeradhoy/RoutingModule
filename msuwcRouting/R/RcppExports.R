@@ -2,14 +2,14 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 routeWaterLoop <- function(timeLength, edgeIDs, orders, streamLengths, streamWidths, streamSlopes, aCoeffs, Rsurf, Rsub, by, parentList, spinUpYears, spinUpCycles, manningN, vMonthConv, beaverCoeff, hillslopeLengths) {
-    .Call('msuwcRouting_routeWaterLoop', PACKAGE = 'msuwcRouting', timeLength, edgeIDs, orders, streamLengths, streamWidths, streamSlopes, aCoeffs, Rsurf, Rsub, by, parentList, spinUpYears, spinUpCycles, manningN, vMonthConv, beaverCoeff, hillslopeLengths)
+    .Call('_msuwcRouting_routeWaterLoop', PACKAGE = 'msuwcRouting', timeLength, edgeIDs, orders, streamLengths, streamWidths, streamSlopes, aCoeffs, Rsurf, Rsub, by, parentList, spinUpYears, spinUpCycles, manningN, vMonthConv, beaverCoeff, hillslopeLengths)
 }
 
 routeWaterLoopImprov <- function(timeLength, edgeIDs, orders, streamLengths, streamWidths, streamSlopes, aCoeffs, Rsurf, Rsub, by, parentList, spinUpYears, spinUpCycles, manningN, vMonthConv, beaverCoeff, hillslopeLengths) {
-    .Call('msuwcRouting_routeWaterLoopImprov', PACKAGE = 'msuwcRouting', timeLength, edgeIDs, orders, streamLengths, streamWidths, streamSlopes, aCoeffs, Rsurf, Rsub, by, parentList, spinUpYears, spinUpCycles, manningN, vMonthConv, beaverCoeff, hillslopeLengths)
+    .Call('_msuwcRouting_routeWaterLoopImprov', PACKAGE = 'msuwcRouting', timeLength, edgeIDs, orders, streamLengths, streamWidths, streamSlopes, aCoeffs, Rsurf, Rsub, by, parentList, spinUpYears, spinUpCycles, manningN, vMonthConv, beaverCoeff, hillslopeLengths)
 }
 
 streamTempLoop <- function(timeLength, edgeIDs, orders, velocities, lengths, RsurfSnow, RsurfNoSnow, flowqSub, flowqOut, flowqIn, flowsRiv, annualTmean, by, parentList, K, Tair) {
-    .Call('msuwcRouting_streamTempLoop', PACKAGE = 'msuwcRouting', timeLength, edgeIDs, orders, velocities, lengths, RsurfSnow, RsurfNoSnow, flowqSub, flowqOut, flowqIn, flowsRiv, annualTmean, by, parentList, K, Tair)
+    .Call('_msuwcRouting_streamTempLoop', PACKAGE = 'msuwcRouting', timeLength, edgeIDs, orders, velocities, lengths, RsurfSnow, RsurfNoSnow, flowqSub, flowqOut, flowqIn, flowsRiv, annualTmean, by, parentList, K, Tair)
 }
 
