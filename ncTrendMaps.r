@@ -5,6 +5,7 @@ plot(raster::brick(paste(setupList$ncdir, "/",  "GYE_Daymet_Paper_stand_monthly_
 
 rast <- raster::brick(paste0(setupList$ncdir, "GYE_Daymet_Paper_stand_monthly_", var, "_", seas, "trend.nc"))
 
+
 print(c(cellStats(rast, min), cellStats(rast,max)))
 cellStats(rast, mean) + 2*cellStats(rast, sd)
 hist(rast)
@@ -12,7 +13,9 @@ quantile(rast, prob=c(.01, .99) )
 
 i <- 1
 for(var in c("msro", "mssro", "prcp", "spack", "tmean")){
+  
 	lims <- c(4, 2.5, 2, 10, .25)
+	
 	par(mfrow=c(1,4))
 	for(seas in c("MAM", "JJA", "SON", "DJF")){
 		colRamp <- colorRampPalette(c("darkred", "red", "grey", "blue", "darkblue"))

@@ -1,0 +1,22 @@
+---
+title: "EDA"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load Data
+
+```{r}
+load(data)
+devtools::install_github("msuwcRouting")
+
+```
+
+
+
+```{r}
+
+```

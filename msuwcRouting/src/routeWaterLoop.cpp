@@ -4,7 +4,23 @@ using namespace Rcpp;
 //RouteWater = function(edges, catchments, Rsurf, Rsub, spinUpCycles=0, spinUpYears=10, debugMode=F, by="day", widthCoeffs=c(.3, .6), manningN=.07, slopeMin=.01, aCoeffCoeff=3, outputExtraVars=T, etaInt=10){
 
 // [[Rcpp::export]]
-List routeWaterLoop(int timeLength, CharacterVector edgeIDs, IntegerVector orders, NumericVector streamLengths, NumericVector streamWidths, NumericVector streamSlopes, NumericVector aCoeffs, NumericMatrix Rsurf, NumericMatrix Rsub, String by, List parentList, int spinUpYears, int spinUpCycles, double manningN, NumericVector vMonthConv, NumericVector beaverCoeff, NumericVector hillslopeLengths){
+List routeWaterLoop(int timeLength, 
+                    CharacterVector edgeIDs, 
+                    IntegerVector orders, 
+                    NumericVector streamLengths, 
+                    NumericVector streamWidths, 
+                    NumericVector streamSlopes, 
+                    NumericVector aCoeffs, 
+                    NumericMatrix Rsurf, 
+                    NumericMatrix Rsub, 
+                    String by, 
+                    List parentList, 
+                    int spinUpYears, 
+                    int spinUpCycles, 
+                    double manningN, 
+                    NumericVector vMonthConv, 
+                    NumericVector beaverCoeff, 
+                    NumericVector hillslopeLengths){
 
 	Rcpp::Rcout << "Routing cpp"  << std::endl;
 
@@ -48,6 +64,8 @@ List routeWaterLoop(int timeLength, CharacterVector edgeIDs, IntegerVector order
 				} else {
 					vConvFactor = 60*60*24/1000;
 				}
+				
+				Rcpp::checkUserInterrupt()
 
 			for(int i=0; i < edgeIDs.size(); i++){
 

@@ -5,12 +5,16 @@
 #Date Created: 4/3/2015
 #Date Last Modified:
 
+
+makeRasterTrendMaps <- function()
+  
 ncdir <- ""
 
 #### Input Trend map for paper
 #png("Plots/inputTrends.png", width=800, height=1000)
 par(mfrow=c(5,4), mar=c(1,1,1,5))
 i <- 1
+
 for(var in c("prcp", "tmean", "spack", "msro", "mssro")){
 
 	#upper and lower trend value bounds for each var
@@ -23,14 +27,16 @@ for(var in c("prcp", "tmean", "spack", "msro", "mssro")){
 		if(var == "tmean"){
 			colRamp <- colorRampPalette(rev(c("darkred", "red", "grey", "blue", "darkblue")))
 		}
-		#rast <- raster::brick(paste0(ncdir, "trends/", "GYE_Daymet_Paper_stand_monthly_", var, "_", seas, "trend.nc"))
+		
+		rast <- raster::brick(paste0(ncdir, "trends/", "GYE_Daymet_Paper_stand_monthly_", var, "_", seas, "trend.nc"))
 
 		zlimit <- lims[i]
 		zlimit <- c(-zlimit, zlimit)
 
-		#plot(rast, col=colRamp(1000), axes=F, box=F, legend.width=2, zlim=zlimit, zlimcol="darkred")
+		plot(rast, col=colRamp(1000), axes=F, box=F, legend.width=2, zlim=zlimit, zlimcol="darkred")
 
-		#map("state", add=T) #If you want to add state lines to the map, uncomment this
+		map("state", add=T) #If you want to add state lines to the map, uncomment this
+		
 		title(paste0(seas, " ", switch(var,
 									   msro = "Surface Runoff",
 									   mssro = "Subsurface Runoff",

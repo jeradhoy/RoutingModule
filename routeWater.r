@@ -1,176 +1,6 @@
-###################
-# Outline-Skeleton for doing all routing
-#
-# Created by Jerad Hoy
-# Date 8/4/2015
-#
-#
-#########################
-
-## Load necessary packages
-library(hydroGOF)
-library(sp)
-library(maptools)
-library(raster)
-library(rgdal)
-library(ncdf4)
-library(plotrix)
-library(RCurl)
-library(devtools)
-library(Rcpp)
-library(maps)
-load_all("msuwcRouting")
-#load("RData/tempDataProcessed2-26-16.RData")
-
-options(scipen=999)
-#.pardefault <- par()
-#par(mar=c(5,4,4,2)+.1)
-
-
-loadRoutingDefaults <- function(defaultTsv){
-	setupDefaults <- read.delim(defaultTsv, sep="=", stringsAsFactors=F, header=F, comment.char="#")
-
-	setupDefaults
-	setupList <- as.list(setupDefaults[,2])
-	names(setupList) <- setupDefaults[,1]
-	rm(setupDefaults)
-	setupList
-
-	for(i in 1:length(setupList)){
-		if(!is.na(as.numeric(setupList[[i]]))){
-			setupList[[i]] <- as.numeric(setupList[[i]])
-		}
-		if(!is.na(as.logical(setupList[[i]]))){
-			setupList[[i]] <- as.logical(setupList[[i]])
-		}
-		if(substr(setupList[[i]], 1, 2) == "c("){
-			setupList[[i]] <- eval(parse(text=setupList[[i]]))
-		}
-	}
-	return(setupList)
-}
-
-setupList <- loadRoutingDefaults("routingDefaults3-26-16.tsv")
-
-########################################################
-#
-# Rest of script should not need configuration
-# Run lines sequentially
-#
-# May want to CHECK data at each step to make sure it is working properly
-#
-#######################################################
-
-# Load scripts
-load_all("msuwcRouting")
-
-
-# Read in edges and catchments
-if(!exists("catchments")){
-    catchments <- readOGR(setupList$catchmentFileDir, setupList$catchmentFileName, stringsAsFactors=F)
-    edges <- readOGR(setupList$edgeFileDir, setupList$edgeFileName, stringsAsFactors=F)
-}
-
-#edgesInBounds <- edges[edges$HUC10 %in% as.numeric(as.character(read.dbf("/Users/hoy/Desktop/MSUWC/Data/Shapefiles/GYE_Huc10_Basins.dbf")$HUC10)),]
-#edgesInBounds <- edges
-
-
-if(setupList$subsetEdgesCatchs){
-    if(setupList$selectByHuc){
-		# Subset edges and catchments
-		edgesInBounds <- GetShapesInBounds(edges, setupList$hucCodes)
-    } else {
-		#Can also subset by edge or catchment ID's if hucSelection isn't working as desired
-		edgesInBounds <- GetShapesById(edges, setupList$edgeIds)
-		#lamarEdges <- GetShapesById(edges, setupList$edgeIds)
-    }
-} else {
-    edgesInBounds <- edges
-}
-
-#### Temporary quick fix for GYE IOE run
-	catchmentsInBounds <- catchments
-	edgesInBounds <- edges[edges@data[, setupList$edgeIdField] %in% as.numeric(catchmentsInBounds@data[, setupList$catchIdField]),]
-###################
-
-catchmentsInBounds <- catchments[catchments@data[, setupList$catchIdField] %in% as.numeric(edgesInBounds@data[, setupList$edgeIdField]),]
-
-lamarCatch <- catchments[catchments@data[, catchIdField] %in% as.numeric(lamarEdges@data[, edgeIdField]),]
-
-#########################
-# CHECK to make sure edges are subsetted properly
-#########################
-plot(edgesInBounds)
-plot(catchmentsInBounds, add=T)
-
-########################
-# CHECK to make sure catchments cover NetCDF
-# Empty gridcells will be given value of 0, and discharge will appear to be less than actual
-#######################
-plot(raster::brick(paste(setupList$ncdir, "/",  setupList$surfaceNcName, sep=""), setupList$surfaceVarName), 1, ext=raster::extent(catchmentsInBounds)+.1, col="red")
-
-plot(raster::brick(paste(setupList$ncdir, "/",  setupList$precipNcName, sep=""), setupList$precipVarName), 1, ext=raster::extent(catchmentsInBounds)+.1, col="red")
-
-plot(catchmentsInBounds, add=T)
-plot(streamPoints, add=T)
-
-
-tmean <- brick("/Users/hoy/Desktop/MSUWC/Data/DriverData/GYE_Daymet_stand_monthly_tmean.nc", "tmean")
-
-cellStats(subset(tmean, 1:10), "mean")
-runOnHyalite("tmeanStats", objs=c("tmean"), packages=c("raster"), oneLine=T)
-#catchmentsInBounds  <- catchments
 
 
 
-# Generate Runoff
-if(setupList$aggregateAllCatchments){
-    catchmentsToUse <- catchments
-} else {
-   catchmentsToUse <- catchmentsInBounds
-}
-
-if(!exists("surfaceRunoff")){
-
-    surfaceRunoff <- AggregateRunoff(ncFile=paste(setupList$ncdir, "/",  setupList$surfaceNcName, sep=""), catchmentPolygons=catchmentsToUse, useWeights=T, runoffVar=setupList$surfaceVarName, startDate=setupList$simStartDate, by=setupList$timeStep)
-
-    notifyMe("GYE Runoff finished aggregating")
-    subsurfRunoff <- AggregateRunoff(ncFile=paste(setupList$ncdir, "/",  setupList$subNcName, sep=""), catchmentPolygons=catchmentsToUse, useWeights=T, runoffVar=setupList$subsurfVarName, startDate=setupList$simStartDate, by=setupList$timeStep)
-    notifyMe("GYE Subsurface Runoff finished aggregating")
-
-}
-
-if(aggregatePrecip){
-    if(!exists("precip")){
-	precip <- AggregateRunoff(ncFile=paste(setupList$ncdir, "/", setupList$precipNcName, sep=""), catchmentPolygons=catchmentsToUse, runoffVar=setupList$precipVarName, startDate=setupList$simStartDate, by=setupList$timeStep, convertToDischarge=F, useWeights=T)
-    }
-}
-if(aggregateSnowpack){
-    if(!exists("snowpack")){
-	snowpack <- AggregateRunoff(ncFile=paste(setupList$ncdir, "/",  setupList$snowpackNcName, sep=""), catchmentPolygons=catchmentsToUse, runoffVar=setupList$snowpackVarName, startDate=setupList$simStartDate, by=setupList$timeStep, convertToDischarge=F, useWeights=T)
-    }
-}
-
-# Route Water
-load_all("msuwcRouting")
-aCoeffCoeff <- 40
-manningN <- .1
-spinUpYears <- 10
-slopeMin <- 0.01
-slopeMin
-
-
-flow <- RouteWater(edges=edgesInBounds, catchments=catchmentsInBounds, Rsurf=surfaceRunoff,  Rsub=subsurfRunoff, spinUpCycles=gwSpinUpCycles, spinUpYears=10, debugMode=F, by=timeStep, widthCoeffs=streamWidthCoeffs, manningN=manningN, slopeMin=slopeMin, aCoeffCoeff=aCoeffCoeff)
-
-
-load_all("msuwcRouting")
-sourceCpp("/Data/Lab/LPJ-GUESS/hydronet/msuwcRouting/R/routeWaterLoop.cpp")
-sourceCpp("/Users/hoy/Desktop/LPJ-GUESS/hydronet/msuwcRouting/R/routeWaterLoopImprov.cpp")
-load_all("msuwcRouting")
-
-flowCpp.1 <- RouteWaterCpp(edges=edgesInBounds, catchments=catchmentsInBounds, Rsurf=surfaceRunoff,  Rsub=subsurfRunoff, spinUpCycles=10, spinUpYears=10, debugMode=F, by=setupList$timeStep, widthCoeffs=setupList$streamWidthCoeffs, manningN=.1, slopeMin=.01, aCoeffCoeff=40, beaverCoeff=1)
-
-flowCpp.05 <- RouteWaterCpp(edges=edgesInBounds, catchments=catchmentsInBounds, Rsurf=surfaceRunoff,  Rsub=subsurfRunoff, spinUpCycles=10, spinUpYears=10, debugMode=F, by=setupList$timeStep, widthCoeffs=setupList$streamWidthCoeffs, manningN=.05, slopeMin=.01, aCoeffCoeff=40, beaverCoeff=1)
 
 for(i in 14000:14500){
 	plot(1:100, flowCpp.1$qOut[1:100,i], type="l")
@@ -178,35 +8,8 @@ for(i in 14000:14500){
 	readline()
 }
 
+
 ##NOTES: changing manningN from .1 to .05 seems to only really have a large effect on the the peak discharge month, shifting it back one month in 0.5
-
-
-#flowCppBeaver <-
-runHyalite("flowGyeNoSpin", oneLine=F)
-
-load_all("msuwcRouting")
-flowGyeNoSpin <- RouteWater(edges=edgesInBounds, catchments=catchmentsInBounds, Rsurf=surfaceRunoff[360:396,],  Rsub=subsurfRunoff[360:396,], spinUpCycles=0, spinUpYears=10, debugMode=F, by=timeStep, widthCoeffs=streamWidthCoeffs, manningN=manningN, slopeMin=slopeMin, aCoeffCoeff=aCoeffCoeff)
-
-hyalite.send
-
-
-
-# Read in gauge data
-if(!exists("nwisGauges")){
-    nwisGauges <- readOGR(setupList$nwisGaugeDir, setupList$nwisGaugeFname, stringsAsFactors=F)
-	nwisGauges <- spTransform(nwisGauges, catchmentsInBounds@proj4string)
-	length(which(!is.na(over(nwisGauges, catchmentsInBounds)[,3])))
-	!is.na(over(nwisGauges, catchmentsInBounds)[,3])
-	nwisGye <- nwisGauges[!is.na(over(nwisGauges, catchmentsInBounds)[,3]),]
-	nwisGyeSnapped <- snapPointsToLines(nwisGye, edgesInBounds, maxDist=NA, withAttrs=T, idField=setupList$edgeIdField)
-	nwisGyeSnapped
-
-
-gaugeData <- GetGaugeData(edgesInBounds, nwisGyeSnapped, snappedGauges=nwisGyeSnapped, aggregateByMonth=T, checkGauges=F)
-
-}
-
-load_all("msuwcRouting")
 
 gaugeData <- GetGaugeData(edgesInBounds, nwisGauges, aggregateByMonth=aggregateGaugeDataByMonth, checkGauges=F)
 
@@ -215,7 +18,6 @@ runOnHyalite("tempDataMonthly", obj=c("edgesInBounds", "nwisGauges", "setupList"
 tempDataMonthly <- GetGaugeData(edgesInBounds, nwisGauges, simEndDate="2015-12-31", aggregateByMonth=T, checkGauges=F, varCode="00010")
 
 
-notifyMe("All gauges processed")
 
 
 makeHydrographs(flowGYE, gaugeData)
@@ -225,13 +27,11 @@ makeHydrographs(tempSim, gaugeData=NULL, )
 makeHydrographs(flowCpp, gaugeData, gofs=daymetGofs, titleStart="Daymet")
 makeHydrographs(flowCpp, gaugeData)
 
-load_all("msuwcRouting")
 
 gaugeData <- gaugeDataMonthly
 
 gaugeData <- gaugeData[!is.na(names(gaugeData))]
 
-load_all("msuwcRouting")
 
 makeHydrographs(flow, gaugeData, saveGraphs=saveHydrographs, plotSeason=F, plotAnnual=F, plotStats=F, dataMin=100)
 
@@ -246,7 +46,6 @@ makeHydrographs(flowCpp, gaugeData, plotSeason=T, plotAnnual=F, saveGraphs=saveH
 ##############
 # Routing and prep for paper figs
 #############
-load_all("msuwcRouting")
 Rcpp::sourceCpp("./msuwcRouting/R/streamTempLoop.cpp")
 Rcpp::sourceCpp("./msuwcRouting/R/routeWaterLoop.cpp")
 load("topoWxRoutingInputs.RData")
@@ -334,201 +133,6 @@ topoGofs <- CalcGOFs2(flowCppTopoWx$qOut, gaugeDataFrame$qOut)
 daymetTempGofs <- CalcGOFs2(tempSimGyeCpp$Tw, tempDataFrame$Tw)
 topoTempGofs <- CalcGOFs2(tempSimGyeCppTopoWx$Tw, tempDataFrame$Tw)
 
-###############
-### PLOTS FOR PAPER
-###############
-
-## Lamar Tower Gauge
-png("Plots/lamarTower.png", width=1000, height=300)
-par(mar=c(4.1,5.5,4.1,2.1), mfrow=c(1,1))
-plot(as.yearmon(rownames(flowCpp$qOut)), flowCpp$qOut[, "21647"], type="l", lwd=2, cex=1, cex.lab=1, cex.axis=1, col="red", xlab=NA, ylab=expression(paste("Flow (m"^"3", "/s)")))
-lines(as.yearmon(rownames(gaugeDataFrame$qOut)), gaugeDataFrame$qOut[, "21647"], lwd=2)
-title("Simulated Streamflow at Lamar Tower Gauge", cex.main=1.5)
-legend("topleft", col=c("red", "black"), legend=c("Modelled LPJ-GUESS Streamflow", "Observed Streamflow"), lty=1, lwd=2, inset=c(.01, .02), cex=1)
-dev.off()
-
-#### Snake river temp
-png("Plots/snakeRiverTemp.png", width=1000, height=300)
-par(mar=c(4.1,5.5,4.1,2.1), mfrow=c(1,1))
-plot(as.yearmon(rownames(tempSimGyeCpp$Tw)), tempSimGyeCpp$Tw[, "29277"], type="l", lwd=2, cex=1, cex.lab=1, cex.axis=1, col="red", xlab=NA, ylab=expression(paste("Temp (C)")))
-lines(as.yearmon(rownames(tempDataFrame$Tw)), tempDataFrame$Tw[, "29277"], lwd=2)
-title("Simulated Temperature on Snake River", cex.main=1.5)
-legend("topleft", col=c("red", "black"), legend=c("Modelled LPJ-GUESS Stream Temperature", "Observed Stream Temperature"), lty=1, lwd=2, inset=c(.01, .02), cex=1)
-dev.off()
-
-### Flow trend maps for daymet
-png("Plots/daymetFlowTrend.png", width=1000, height=300)
-par(mfrow=c(1,4), mar=c(0,0,2,5), oma=c(0,0,4,0))#, cex=1, cex.main=1, cex.lab=1, cex.axis=1)
-plotSeasonalMaps(daymetFlowSeasSlopes, varName=" Streamflow", savePlots=F, plotSignifOnly=F, plotCatchs=F, pause=F, plotTogether=T)
-title("Daymet", outer=T, cex.main=2)
-dev.off()
-
-### Flow trend maps for topowx
-png("Plots/topoFlowTrend.png", width=1000, height=300)
-par(mfrow=c(1,4), mar=c(0,0,2,5), oma=c(0,0,4,0))#, cex=1, cex.main=1, cex.lab=1, cex.axis=1)
-plotSeasonalMaps(topoFlowSeasSlopes, varName=" Streamflow", savePlots=F, plotSignifOnly=F, plotCatchs=F, pause=F, plotTogether=T)
-title("TopoWx", outer=T, cex.main=2)
-dev.off()
-
-### seasonal density plots of trends
-png("Plots/trendElevSeas.png", width=1500, height=450)
-elevLevels <- cut(catchElev[edgesInBounds$RiverOrder > 10], breaks=c(0, 1750, 2500, 4000), dig.lab=5)
-par(mar=c(4.1,4.2,4.1,1), mfrow=c(1,4), cex=1, cex.main=1.5, cex.lab=1.3, cex.axis=1.3)
-for(seas in c("mam", "jja", "son", "djf")){
-	sm::sm.density.compare(daymetFlowSeasSlopes[[seas]][[1]][edgesInBounds$RiverOrder > 10], elevLevels, h=.1, xlim=c(-2,2), xlab=paste(toupper(seas), "Flow Trend"), lwd=2)
-	colfill<-c(2:(2+length(levels(elevLevels))))
-	legend("topright", levels(elevLevels), lwd=2, lty=1:3, col=2:4, title="Elevation (m)", bty="n")
-	title(paste(toupper(seas), "Flow Trends"))
-	abline(v=0)
-}
-dev.off()
-
-### Temp trend maps for daymet
-png("Plots/daymetTempTrend.png", width=1000, height=300)
-#par( mfrow = c( 1, 4 ), oma = c( 0, 0, 2, 0 ) )
-#m <- matrix(c(1,1,1,1,2,3,4,5,6,6,6,6,7,8,9,10),nrow = 4,ncol = 4,byrow = TRUE)
-#layout(mat = m,heights = c(.1,1,.1,1))
-#title("Daymet")
-par(mfrow=c(1,4), mar=c(0,0,2,5), oma=c(0,0,4,0))#, cex=1, cex.main=1, cex.lab=1, cex.axis=1)
-plotSeasonalMaps(daymetTempSeasSlopes, varName=" Stream Temp", savePlots=F, plotSignifOnly=F, plotCatchs=F, pause=F, plotTogether=T, revColors=T)
-title("Daymet", outer=T, cex.main=2)
-dev.off()
-
-
-### Temp trend maps for topowx
-png("Plots/topoTempTrend.png", width=1000, height=300)
-par(mfrow=c(1,4), mar=c(0,0,2,5), oma=c(0,0,4,0))#, cex=1, cex.main=1, cex.lab=1, cex.axis=1)
-plotSeasonalMaps(topoTempSeasSlopes, varName=" Stream Temp", savePlots=F, plotSignifOnly=F, plotCatchs=F, pause=F, plotTogether=T, revColors=T)
-title("TopoWx", outer=T, cex.main=2)
-dev.off()
-
-### seasonal density plots of trends
-png("Plots/tempTrendElevSeas.png", width=1500, height=450)
-elevLevels <- cut(catchElev[edgesInBounds$RiverOrder > 10], breaks=c(0, 1750, 2500, 4000), dig.lab=5)
-par(mar=c(4.1,4.2,4.1,1), mfrow=c(1,4), cex=1, cex.main=1.5, cex.lab=1.3, cex.axis=1.3)
-for(seas in c("mam", "jja", "son", "djf")){
-	sm::sm.density.compare(daymetTempSeasSlopes[[seas]][[1]][edgesInBounds$RiverOrder > 10], elevLevels, h=.1, xlim=c(-2,2), xlab=paste(toupper(seas), "Temp Trend"), lwd=2)
-	colfill<-c(2:(2+length(levels(elevLevels))))
-	legend("topright", levels(elevLevels), lwd=2, lty=1:3, col=2:4, title="Elevation (m)", bty="n")
-	title(paste(toupper(seas), "Temp Trends"))
-	abline(v=0)
-}
-dev.off()
-
-### salmonoid growth graphs
-png("Plots/snakeRiverFishHab.png", width=1000, height=300)
-par(mar=c(4.1,5.5,4.1,2.1), mfrow=c(1,1))
-plot(as.yearmon(rownames(tempSimGyeCpp$Tw))[240:420], sgm$YCT[240:420,"29277"], type="l", lwd=2, cex=1, cex.lab=1, cex.axis=1, col="yellow", xlab=NA, ylab=paste("Daily Growth Potential (% Mass)"))
-lines(as.yearmon(rownames(tempDataFrame$Tw))[240:420], sgm$RBT[240:420,"29277"], type="l", lwd=2, col="green", lty=1)
-lines(as.yearmon(rownames(tempDataFrame$Tw))[240:420], sgm$BKT[240:420,"29277"], type="l", lwd=2, col="red", pch=1)
-title("Simulated Salmonoid Growth on Snake River", cex.main=1.5)
-legend("bottomleft", col=c("yellow", "green", "red"), legend=c("Yellowstone Cutthroat Trout", "Rainbow Trout", "Brook Trout"), lty=1, lwd=2, inset=c(.01, .02), cex=1, bg="white")
-dev.off()
-
-#### Input Trend map for paper
-png("Plots/inputTrends.png", width=800, height=1000)
-par(mfrow=c(5,4), mar=c(1,1,1,5))
-i <- 1
-for(var in c("prcp", "tmean", "spack", "msro", "mssro")){
-	lims <- c(2, .25, 10, 4, 2.5)
-	for(seas in c("DJF", "MAM", "JJA", "SON")){
-		colRamp <- colorRampPalette(c("darkred", "red", "grey", "blue", "darkblue"))
-		if(var == "tmean"){
-			colRamp <- colorRampPalette(rev(c("darkred", "red", "grey", "blue", "darkblue")))
-		}
-		rast <- raster::brick(paste0(setupList$ncdir, "trends/", "GYE_Daymet_Paper_stand_monthly_", var, "_", seas, "trend.nc"))
-		zlimit <- lims[i]
-		zlimit <- c(-zlimit, zlimit)
-
-		plot(rast, col=colRamp(1000), axes=F, box=F, legend.width=2, zlim=zlimit, zlimcol="darkred")
-
-		#map("state", add=T)
-		title(paste0(seas, " ", switch(var,
-									   msro = "Surface Runoff",
-									   mssro = "Subsurface Runoff",
-									   prcp = "Precip",
-									   spack = "Snowpack",
-									   tmean = "Tmean"), " Trend"))
-	}
-	i <- i + 1
-	#readline()
-}
-dev.off()
-
-statToPlot <- c("NSE", "mNSE", "rNSE")
-statToPlot <- c("mNSE")
-
-png("Plots/flowValidHist.png", width=900, height=450)
-par(mfrow=c(1,2))
-for(stat in statToPlot){
-	hist(daymetGofs[stat, daymetGofs[stat,] > 0], breaks=seq(0, 1, .1), xlim=c(0,1), xlab=paste0(stat, " with ", length(which(daymetGofs[stat,] > 0)), "/", ncol(daymetGofs), " > 0"), main=paste0(stat, " on Daymet Monthly Streamflow"))
-}
-for(stat in statToPlot){
-	hist(topoGofs[stat, topoGofs[stat,] > 0], breaks=seq(0, 1, .1), xlim=c(0,1), ylim=c(0,12), xlab=paste0(stat, " with ", length(which(topoGofs[stat,] > 0)), "/", ncol(topoGofs), " > 0"), main=paste0(stat, " on TopoWx Monthly Streamflow"))
-}
-dev.off()
-
-png("Plots/tempValidHist.png", width=600, height=300)
-par(mfrow=c(1,2))
-for(stat in statToPlot){
-	hist(daymetTempGofs[stat, daymetTempGofs[stat,] > 0], breaks=seq(0, 1, .1), xlim=c(0,1), xlab=paste0(stat, " with ", length(which(daymetTempGofs[stat,] > 0)), "/", ncol(daymetTempGofs), " > 0"), main=paste0(stat, " on Daymet Monthly Stream Temp"))
-}
-for(stat in statToPlot){
-	hist(topoTempGofs[stat, topoTempGofs[stat,] > 0], breaks=seq(0, 1, .1), xlim=c(0,1), ylim=c(0,3), xlab=paste0(stat, " with ", length(which(topoTempGofs[stat,] > 0)), "/", ncol(topoTempGofs), " > 0"), main=paste0(stat, " on TopoWx Monthly Stream Temp"))
-}
-dev.off()
-
-### GYE Map
-png("Plots/gyeEdgeMap.png", width=500, height=500)
-par(mar=c(0,0,2,0))
-plot(edgesInBounds, col="blue")
-map("state", add=T, lwd=2)
-title("GYE Stream Network", cex.main=1)
-dev.off()
-
-daymetGofs[,"21647"]
-
-
-### Fish fig
-as.yearmon(rownames(sgm$YCT))
-
-elevBreaks <- list(names(catchElev[catchElev > 0 & catchElev <= 1750]),
-names(catchElev[catchElev > 1750 & catchElev <= 2500]),
-names(catchElev[catchElev > 2500 & catchElev <= 4000]))
-
-annualSgm <- lapply(elevBreaks, function(y){lapply(sgm, function(x){rowMeans(aggregate(x[,y], list(substring(rownames(x[,y]), 5)), FUN=mean)[,-1])})})
-
-annualSgmSD <- lapply(elevBreaks, function(y){lapply(sgm, function(x){rowMeans(aggregate(x[,y], list(substring(rownames(x[,y]), 5)), FUN=sd)[,-1])})})
-
-par(mfrow=c(1,3))
-plot(1980:2014, annualSgm[[1]], type="l", ylim=c(-2,2))
-lines(1980:2014, annualSgm[[2]], type="l")
-lines(1980:2014, annualSgm[[3]], type="l")
-
-annualYCT <- annualYCT[,-1]
-
-head(annualYCT)
-plot(1980:2014, rowMeans(annualYCT), type="l")
-
-plot(rowMeans(sgm$YCT), type="l")
-
-png("Plots/fishHabElev.png", width=1000, height=300)
-par(mfrow=c(1,3))
-for(i in 1:3){
-	plot(1980:2014, annualSgm[[i]][[1]], type="l", ylim=c(-2.5,1), col=2, ylab="Mean Annual Growth Rate (%/day)", xlab=NA, lwd=2)
-	abline(lm(annualSgm[[i]][[1]] ~ c(1980:2014)), col=2, lty=2)
-	for(j in 2:3){
-		lines(1980:2014, annualSgm[[i]][[j]], col=1+j, lwd=2)
-		abline(lm(annualSgm[[i]][[j]] ~ c(1980:2014)), col=1+j, lty=2)
-	}
-	title(paste0(c("Low", "Mid", "High")[i], " Elevation Streams (", c(0,1750,2500)[i], "-", c(1750, 2500, 4000)[i], " m)"))
-	legend("bottomright", col=2:4, legend=c("Yellowstone Cutthroat Trout", "Rainbow Trout", "Brook Trout"), lty=1, lwd=2)#, inset=c(.01, .02), cex=1, bg="white")
-}
-dev.off()
-
-##########################
-## END of paper figs
-##########################
 
 
 
@@ -578,7 +182,6 @@ for(seas in c("mam", "jja", "son", "djf")){
 
 load("gaugeData.RData")
 
-load_all("msuwcRouting")
 
 sourceCpp("/Data/Lab/LPJ-GUESS/hydronet/msuwcRouting/R/routeWaterLoop.cpp")
 
@@ -1347,7 +950,6 @@ par(mfrow=c(1,1))
 abline(lm(pmax(gyeNse, 0) ~ meanQs))
 
 
-load_all("msuwcRouting")
 
 
 makeHydrographs(flow, gaugeData, saveGraphs=saveHydrographs, plotSeason=F, plotAnnual=F, plotStats=F, dataMin=100)
@@ -1412,7 +1014,6 @@ rm(msro)
 mssro <- get.var.ncdf(open.ncdf(paste(ncdir, "/", subNcName, sep="")), "mssro")
 meanMssro <- apply(mssro, MARGIN=3, mean, na.rm=T)
 rm(mssro)
-notifyMe("Done meanming mssro")
 
 plot(seq(as.Date(simStartDate), as.Date(simEndDate), by="month"), meanSnow, type="l", col="cyan", ylab="Mean Monthly Water (mm/m2)", main="GYE LPJ-Guess Mean Monthly Outputs", xlab=NA)
 lines(seq(as.Date(simStartDate), as.Date(simEndDate), by="month"), meanPrecip, type="l", col="blue")
@@ -1444,7 +1045,6 @@ legend("topright", lty=1, col=c("cyan", "blue", "red", "black"), legend=c("Snowp
 
 
 
-load_all("msuwcRouting")
 
 runoff <- AggregateRunoffSnow(ncFileName=surfaceNcName, ncDir=ncdir, snowFile=snowpackNcName, catchmentPolygons=catchmentsToUse, useWeights=T, runoffVar=surfaceVarName, startDate=simStartDate, by=timeStep)
 
@@ -1467,7 +1067,6 @@ ll <- sort( sapply(ls(),function(x){object.size(get(x))}))
 catchmentsToUse <- catchmentsInBounds
 catchmentsToUse
 
-load_all("msuwcRouting")
 
 runHyalite("tMeanGye", objs=c("catchmentsInBounds", "setupList"), overwrite=T, oneLine=T)
 
@@ -1483,7 +1082,6 @@ flowTest <- RouteWater(edges=edgesInBounds, catchments=catchmentsInBounds, Rsurf
 
 
 
-load_all("msuwcRouting")
 
 runHyalite("tempSimGyeK10_c", objs=c("edgesInBounds", "catchmentsInBounds", "snow", "tMeanGye", "flowGye", "setupList", "StreamTemp_c"), oneLine=T, packages="msuwcRouting", overwrite=T)
 
@@ -1492,15 +1090,7 @@ tempSimGYEK10 <- StreamTemp(edges=edgesInBounds, catchments=catchmentsInBounds, 
 
 tempSimGYEK10_c <- StreamTemp_c(edges=edgesInBounds, catchments=catchmentsInBounds, RsurfSnow=snow$msroSnow, RsurfNoSnow=snow$msroNoSnow, Tair=tMeanGye, simFlow=flowGye, defaults=setupList, by="month", outputExtraVars=T, debugMode=F, K=10, etaInt=1)
 
-load_all("msuwcRouting")
 tempSimLamar <- StreamTemp(edges=lamarEdges, catchments=lamarCatch, RsurfSnow=snow$msroSnow, RsurfNoSnow=snow$msroNoSnow, Tair=tMeanGye, simFlow=flowGye, defaults=setupList, by="month", outputExtraVars=T, debugMode=F, runStop=300, K=10, etaInt=1, prof="prof2.out")
-
-
-
-
-load_all("msuwcRouting")
-
-
 
 tempSimGYEK10$Twater[,] == tempSimGye[,]
 
@@ -1574,7 +1164,6 @@ rm(tempSimGyeNoSpinK10)
 
 #flowGye and flowGye2 loaded last nightkk
 
-notifyMe("Temp finished running")
 
 a <- 1e20
 system.time(rep(for(i in 1:10) i*2, a))
@@ -1633,7 +1222,6 @@ plotHydroVar(tempSim, gauges=NULL, hydroVar="TwaterLocalWarmed", edgeIdList=c("2
 	##TT - calculate from velocity and stream length
 
 
-load_all("msuwcRouting")
 catchmentsToUse <- catchmentsInBounds
 
 lamarSnowMsro <- AggregateSnow(defaults=setupList, catchmentPolygons=catchmentsToUse, ncDir=setupList$ncdir)
