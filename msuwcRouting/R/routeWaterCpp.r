@@ -24,32 +24,40 @@
 #' @name RouteWater
 #' @export
 
-RouteWaterCpp <- function(edges, catchments, Rsurf, Rsub, defaults=setupList, spinUpCycles=0, spinUpYears=10, debugMode=F, by="day", widthCoeffs=c(.3, .6), manningN=.07, slopeMin=.01, aCoeffCoeff=3, outputExtraVars=T, etaInt=10, beaverCoeff=NULL){ 
+RouteWaterCpp <- function(streamNet, Rsurf, Rsub, defaults=setupList, spinUpCycles=0, spinUpYears=10, debugMode=F, by="day", widthCoeffs=c(.3, .6), manningN=.07, slopeMin=.01, aCoeffCoeff=3, outputExtraVars=T, etaInt=10, beaverCoeff=NULL){ 
 
-	edgeOrderField <- defaults$edgeOrderField
+  streamDat <- streamNet$data
+  
+	#edgeOrderField <- defaults$edgeOrderField
 
-	edges <- as.data.frame(edges@data)
-    edges <- edges[order(edges[, defaults$edgeOrderField]),]
+	#edges <- as.data.frame(edges@data)
+	
+  #edges <- edges[order(edges[, defaults$edgeOrderField]),]
 
-	idField <- defaults$edgeIdField
-	nextDownField <- defaults$edgeNextDownField
+	#idField <- defaults$edgeIdField
+	#nextDownField <- defaults$edgeNextDownField
 
 	print("Got Here")
-    edges <- AssignContribArea(edges, catchments)
-    edges <- AssignBfWidth(edges, widthCoeffs[1], widthCoeffs[2])
-    edges <- CorrectEdgeSlopes(edges, slopeMin)
-    edges <- AssignAcoeff(edges, catchments, aCoeffCoeff)
+	
+  edges <- AssignContribArea(edges, catchments)
+  
+  edges <- AssignBfWidth(edges, widthCoeffs[1], widthCoeffs[2])
+  
+  correctedSlopes <- CorrectEdgeSlopes(streamDat$Slope, slopeMin)
+  
+  edges <- AssignAcoeff(edges, catchments, aCoeffCoeff)
 
-    LengthKM <- edges[, defaults$edgeLengthField] * 120
+  LengthKM <- edges[, defaults$edgeLengthField] * 120
+    
 	hillslopeLengths <- edges$ContribArea/(2*LengthKM)
 
 
-    # Order edges by Shreve order so calculation is in right order
+  # Order edges by Shreve order so calculation is in right order
 	edges[,idField] <- as.character(edges[,idField])
 	edges[,nextDownField] <- as.character(edges[, nextDownField])
 
-	Rsurf <- Rsurf[,match(edges[, idField], colnames(Rsurf))]
-	Rsub <- Rsub[,match(edges[, idField], colnames(Rsub))]
+	#Rsurf <- Rsurf[,match(edges[, idField], colnames(Rsurf))]
+	#Rsub <- Rsub[,match(edges[, idField], colnames(Rsub))]
 
 	if(is.null(beaverCoeff)){
 		beaverCoeff <- 1.0
@@ -73,7 +81,7 @@ RouteWaterCpp <- function(edges, catchments, Rsurf, Rsub, defaults=setupList, sp
 	widths <- edges[, "bfWidth"]
 
 	#Temporary change to test slope effect
-	slopes <- edges[, "Slope2"]
+	#slopes <- edges[, "Slope2"]
 	#slopes <- rep(.02, length(edges[, "Slope2"]))
 	aCoeffs <- edges[, "aCoeff"]
 	
@@ -86,7 +94,7 @@ RouteWaterCpp <- function(edges, catchments, Rsurf, Rsub, defaults=setupList, sp
 						   orders=orders,
 						   streamLengths=LengthKM, 
 						   streamWidths=widths, 
-						   streamSlopes=slopes,
+						   streamSlopes=correctedSlopes,
 						   aCoeffs=aCoeffs,
 						   Rsurf=as.matrix(Rsurf),
 						   Rsub=as.matrix(Rsub),

@@ -13,14 +13,17 @@ edges <- readOGR(dsn=edgesShapefile, stringsAsFactors=F)
 names(catchments)
 names(edges)
 
-createStreamNetwork <- function(edges, catchments, edgeID, catchID, edgeSlope, edgeLength, catchArea, edgeNextDown, edgeOrder){
+createStreamNetwork <- function(edges, catchments, edgeID, catchID, edgeSlope, edgeLength, catchArea, edgeNextDown, edgeOrder, catchOrder){
+  
+  # Reorder catchments by Shreve order so model runs in correct sequence
+  catchments <- catchments[order(catchments@data[, catchOrder]), ]
   
   # Subsets and reorders edges and catchments so they only have common features
   edges <- edges[na.omit(match(catchments@data[, catchID], edges@data[, edgeID])),]
   catchments <- catchments[na.omit(match(edges@data[, edgeID], catchments@data[, catchID])),]
   
-  return(list(edges = edges,
-              catchments = catchments,
+  return(list(edges = as(edges, "SpatialLines"),
+              catchments = as(catchments, "SpatialPolygons"),
               data = data.frame(ID = as.character(edges@data[, edgeID]),
                          Slope = edges@data[, edgeSlope],
                          Len = edges@data[, edgeLength],
@@ -38,6 +41,7 @@ streamNet <- createStreamNetwork(edges = edges,
                     edgeLength = "Shape_Leng",
                     catchArea = "Shape_Area",
                     edgeNextDown = "NextDown_2",
-                    edgeOrder = "RiverOrder")
+                    edgeOrder = "RiverOrder",
+                    catchOrder = "RiverOrder")
 
 save(streamNet, file = streamNetSaveLocation)

@@ -123,20 +123,6 @@ precip <- AggregateRunoff(ncFile=paste(ncdir, "/", precipNcName, sep=""), catchm
 snowpack <- AggregateRunoff(ncFile=paste(ncdir, "/",  snowpackNcName, sep=""), catchmentPolygons=catchmentsToUse, runoffVar=snowpackVarName, startDate=simStartDate, by=timeStep, convertToDischarge=F, useWeights=T)
 
   
-nwisGauges <- readOGR(nwisGaugeDir, nwisGaugeFname, stringsAsFactors=F)
-  
-nwisGauges <- spTransform(nwisGauges, catchmentsInBounds@proj4string)
-
-length(which(!is.na(over(nwisGauges, catchmentsInBounds)[,3])))
-
-
-nwisGye <- nwisGauges[!is.na(over(nwisGauges, catchmentsInBounds)[,3]),]
-
-nwisGyeSnapped <- snapPointsToLines(nwisGye, edgesInBounds, maxDist=NA, withAttrs=T, idField=edgeIdField)
-
-nwisGyeSnapped
-
-gaugeData <- GetGaugeData(edgesInBounds, nwisGyeSnapped, snappedGauges=nwisGyeSnapped, aggregateByMonth=T, checkGauges=F)
 
 
 
