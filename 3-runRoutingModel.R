@@ -22,7 +22,6 @@
 #library(maps)
 
 #Preprocess inputs
-
 library(devtools)
 load_all("msuwcRouting")
 
@@ -33,6 +32,7 @@ sourceCpp("./msuwcRouting/R/routeWaterLoopImprov.cpp")
 load(file="./NewData/streamNet.RData")
 sro <- read.csv("./NewData/surfaceRunoff.csv")
 ssro <- read.csv("./NewData/subsurfaceRunoff.csv")
+
 #Run routing model
 flow <- RouteWater(edges=edgesInBounds, catchments=catchmentsInBounds, Rsurf=surfaceRunoff,  Rsub=subsurfRunoff, spinUpCycles=gwSpinUpCycles, spinUpYears=10, debugMode=F, by=timeStep, widthCoeffs=streamWidthCoeffs, manningN=manningN, slopeMin=slopeMin, aCoeffCoeff=aCoeffCoeff)
 

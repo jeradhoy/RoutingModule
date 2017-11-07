@@ -1,5 +1,7 @@
 library(rgdal)
 
+#source("./0-setupParams.R")
+
 # Shapefiles need to be in their own directory
 catchmentShapefile <- "./NewData/Shapefiles/GYE_Cathments_Clipped"
 edgesShapefile <- "./NewData/Shapefiles/GYE_DrainageLine2"
