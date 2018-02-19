@@ -13,4 +13,5 @@ export(cleanDat)
 export(findAllParents)
 export(getOrder)
 export(getParents)
-export(notifyMe)
+useDynLib(msuwcRouting)
+

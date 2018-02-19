@@ -1,7 +1,4 @@
 
-
-
-
 for(i in 14000:14500){
 	plot(1:100, flowCpp.1$qOut[1:100,i], type="l")
 	lines(1:100, flowCpp.05$qOut[1:100,i], type="l", col="red")
@@ -451,9 +448,13 @@ for(i in 1:4){
 sapply(gaugeData, function(x){length(which(!is.na(x[,2])))})
 
 #nwisGyeNHD <- snapPointsToLines(nwisGyeSnapped, nhdLine, maxDist=NA, withAttrs=T, idField=setupList$edgeIdField)
+sapply(gaugeData[c(nwisGyeSnappedCleaned[duplicated(nwisGyeSnappedCleaned$nrst_l_),]$SITENO, nwisGyeSnappedCleaned[duplicated(rev(nwisGyeSnappedCleaned$nrst_l_)),]$SITENO)], function(x){length(which(!is.na(x[,2])))})
+
+cbind(nwisGyeSnappedCleaned@data[nwisGyeSnappedCleaned$nrst_l_ %in% nwisGyeSnappedCleaned[duplicated(nwisGyeSnappedCleaned$nrst_l_),]$nrst_l_, c("SITENO", "nrst_l_")],
+meow=sapply(gaugeData[nwisGyeSnappedCleaned[nwisGyeSnappedCleaned$nrst_l_ %in% nwisGyeSnappedCleaned[duplicated(nwisGyeSnappedCleaned$nrst_l_),]$nrst_l_,]$SITENO], function(x){length(which(!is.na(x[,2])))})
+)
 
 nwisGyeSnappedCleaned <- readOGR("./RData/shapefiles/", "nwisGyeSnapped", stringsAsFactors=F)
-
 nwisGyeSnappedCleaned <- nwisGyeSnappedCleaned[!(nwisGyeSnappedCleaned$checkGauge == "dam"),]
 nwisGyeSnappedCleaned <- nwisGyeSnappedCleaned[!(nwisGyeSnappedCleaned$checkGauge == "rm"),]
 

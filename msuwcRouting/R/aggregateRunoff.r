@@ -46,52 +46,52 @@ AggregateRunoff <- function(ncFile, catchmentPolygons, runoffVar, useWeights=F, 
     print("finished extracting data")
 
     if(useWeights && sumData){
-		print("Multiplying by area to get sum")
-		runoff <- sweep(runoff, MARGIN=2, catchmentPolygons@data[, catchAreaField]*14400, "*")
+      print("Multiplying by area to get sum")
+      runoff <- sweep(runoff, MARGIN=2, catchmentPolygons@data[, catchAreaField]*14400, "*")
     }
 
     if(by == "day"){
 
-		  # convert from mm/m2/day to m3/sec
-		if(convertToDischarge){
-			runoff <- runoff/1000*1000000/(24*60*60)
-		}
+        # convert from mm/m2/day to m3/sec
+      if(convertToDischarge){
+        runoff <- runoff/1000*1000000/(24*60*60)
+      }
 
-		  if(!is.null(startDate)){
-		# Create sequence of dates to use as rownames
-		dates <- seq(as.Date(startDate), by="day", length.out=nrow(runoff))
-		if(leapDays == F){
-		  # Take out leap days
-		  dates <- dates[c(-grep("02-29", dates))]
-		}
-		rownames(runoff) <- dates
-		  }
+      if(!is.null(startDate)){
+        # Create sequence of dates to use as rownames
+        dates <- seq(as.Date(startDate), by="day", length.out=nrow(runoff))
+        if(leapDays == F){
+          # Take out leap days
+          dates <- dates[c(-grep("02-29", dates))]
+        }
+      rownames(runoff) <- dates
+      }
 
     } else if(by == "month"){
 
-		if(!is.null(startDate)){
-			dates <- zoo::as.yearmon(seq(as.Date(startDate), by="month", length.out=nrow(runoff)))
-			rownames(runoff) <- dates
-		}
+      if(!is.null(startDate)){
+        dates <- zoo::as.yearmon(seq(as.Date(startDate), by="month", length.out=nrow(runoff)))
+        rownames(runoff) <- dates
+      }
 
-		if(convertToDischarge){
-
-			# Starts with december so that 12%%12 returns 1
-			daysInMonth <- c(31,28,31,30,31,30,31,31,30,31,30,31)
-
-			for(month in 1:nrow(runoff)){
-			  # Convert form mm/m2/timestep to m3/sec
-			  # Need to vary number of days in each month for conversion
-				  runoff[month,] <- runoff[month,]/1000*1000000/(24*60*60*daysInMonth[as.numeric(format(zoo::as.yearmon(rownames(runoff[month,])), "%m"))])
-			}
-		}
+      if(convertToDischarge){
+  
+        # Starts with december so that 12%%12 returns 1
+        daysInMonth <- c(31,28,31,30,31,30,31,31,30,31,30,31)
+  
+        for(month in 1:nrow(runoff)){
+          # Convert form mm/m2/timestep to m3/sec
+          # Need to vary number of days in each month for conversion
+          runoff[month,] <- runoff[month,]/1000*1000000/(24*60*60*daysInMonth[as.numeric(format(zoo::as.yearmon(rownames(runoff[month,])), "%m"))])
+        }
+      }
     }
 
     colnames(runoff) <- catchmentPolygons$HydroID
 
 
     if(!is.null(fname)){
-    	write.table(runoff, paste(fname, ".txt", sep=""))
+      write.table(runoff, paste(fname, ".txt", sep=""))
     }
 
     return(runoff)
@@ -103,10 +103,18 @@ AggregateMonthlyRunoff <- function(ncFile, streamNet, startDate){
     rastStack <- raster::stack(ncFile)
     rastVelox <- velox::velox(rastStack)
     
-    aggVals <- data.frame(t(data.frame(rastVelox$extract(sp=streamNet$catchments, fun=sum))))
+    aggVals <- data.frame(t(data.frame(rastVelox$extract(sp=streamNet$catchments, fun=sum, small=T))))
     
     colnames(aggVals) <- streamNet$data$ID
     rownames(aggVals) <- zoo::as.yearmon(seq(as.Date(startDate), by="month", length.out = nrow(aggVals)))
 
     return(aggVals)
+}
+
+convertMonthlyToDischarge <- function(runoff){
+  
+    # Convert mm*km2/month to m3/sec/month
+    daysInMonth <- c(31,28,31,30,31,30,31,31,30,31,30,31) # Assumes start in January
+    convVector <-  1e6/1000/(24*60*60*daysInMonth)
+    return(runoff*convVector)
 }

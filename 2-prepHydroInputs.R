@@ -1,20 +1,26 @@
-load_all("msuwcRouting")
+devtools::load_all("msuwcRouting")
 
 load(file="./NewData/streamNet.RData")
 
 # LPJ-Guess outputs of surface and subsurface runoff
 ncdir <- "../gye_output/"
-surfaceNcName <- "GYE_Day3_2016_stand_monthly_msro.nc"
-subNcName <- "GYE_Day3_2016_stand_monthly_msro.nc"
+sroNcName <- "GYE_Day3_2016_stand_monthly_msro.nc"
+ssroNcName <- "GYE_Day3_2016_stand_monthly_mssro.nc"
 
-surfaceRunoffSaveLocation <- "./NewData/surfaceRunoff.csv"
-subsurfaceRunoffSaveLocation <- "./NewData/subsurfaceRunoff.csv"
+sroSaveLocation <- "./NewData/surfaceRunoff.csv"
+ssroSaveLocation <- "./NewData/subsurfaceRunoff.csv"
 
-surfaceRunoff <- AggregateMonthlyRunoff(ncFile=paste0(ncdir, surfaceNcName), streamNet = streamNet, startDate="1980-01-01")
+sro <- AggregateMonthlyRunoff(ncFile=paste0(ncdir, sroNcName), streamNet = streamNet, startDate="1980-01-01")
 
-subsurfaceRunoff <- AggregateMonthlyRunoff(ncFile=paste0(ncdir, subNcName), streamNet = streamNet, startDate="1980-01-01")
+ssro <- AggregateMonthlyRunoff(ncFile=paste0(ncdir, ssroNcName), streamNet = streamNet, startDate="1980-01-01")
+
+sro <- convertMonthlyToDischarge(sro)
+ssro <- convertMonthlyToDischarge(ssro)
 
 #might still need to convert it from mm/m2 to m3
 
-write.csv(surfaceRunoff, file = surfaceRunoffSaveLocation)
-write.csv(subsurfaceRunoff, file = subsurfaceRunoffSaveLocation)
+save(sro, file="./NewData/sro.RData")
+save(ssro, file="./NewData/ssro.RData")
+
+write.csv(sro, file = sroSaveLocation)
+write.csv(ssro, file = ssroSaveLocation)

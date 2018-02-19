@@ -22,23 +22,51 @@
 #library(maps)
 
 #Preprocess inputs
-library(devtools)
-load_all("msuwcRouting")
+#library(devtools)
 
-Rcpp::sourceCpp("./msuwcRouting/R/routeWaterLoop.cpp")
+devtools::load_all("msuwcRouting")
 
-sourceCpp("./msuwcRouting/R/routeWaterLoopImprov.cpp")
+#library(msuwcRouting)
 
 load(file="./NewData/streamNet.RData")
-sro <- read.csv("./NewData/surfaceRunoff.csv")
-ssro <- read.csv("./NewData/subsurfaceRunoff.csv")
+load("./NewData/sro.RData")
+load("./NewData/ssro.RData")
 
-#Run routing model
-flow <- RouteWater(edges=edgesInBounds, catchments=catchmentsInBounds, Rsurf=surfaceRunoff,  Rsub=subsurfRunoff, spinUpCycles=gwSpinUpCycles, spinUpYears=10, debugMode=F, by=timeStep, widthCoeffs=streamWidthCoeffs, manningN=manningN, slopeMin=slopeMin, aCoeffCoeff=aCoeffCoeff)
-
-
-
-flowCpp.1 <- RouteWaterCpp(edges=streamNet$edges, catchments=streamNet$catchments, Rsurf=sro,  Rsub=ssro, spinUpCycles=10, spinUpYears=10, debugMode=F, by="month", widthCoeffs=c(0.3, 0.6), manningN=.05, slopeMin=.01, aCoeffCoeff=40, beaverCoeff=1)
+#surfTopoWx <- surfTopoWx[,colnames(sro)]
+#subSurfTopoWx <- subSurfTopoWx[,colnames(ssro)]
 
 
-flowCpp.05 <- RouteWaterCpp(edges=edgesInBounds, catchments=catchmentsInBounds, Rsurf=surfaceRunoff,  Rsub=subsurfRunoff, spinUpCycles=10, spinUpYears=10, debugMode=F, by=setupList$timeStep, widthCoeffs=setupList$streamWidthCoeffs, manningN=.05, slopeMin=.01, aCoeffCoeff=40, beaverCoeff=1)
+# Fill na spaces (catchments without any gridcell centroids with 0)
+sro <- replace(sro, is.na(sro), 0)
+ssro <- replace(ssro, is.na(ssro), 0)
+
+
+flowCpp.1 <- RouteWaterCpp(streamNet = streamNet, Rsurf=sro,  Rsub=ssro, spinUpCycles=2, spinUpYears=10, debugMode=F, by="month", widthCoeffs=c(0.3, 0.6), manningN=.1, slopeMin=.01, aCoeffCoeff=40, beaverCoeff=1)
+
+nullRoutingModel <- function(sro, ssro, streamNet){
+  
+  ro <- sro + ssro
+
+  for(i in 1:ncol(ro)){
+    
+    parents <- which(streamNet$data$NextDown == colnames(ro)[i])
+    
+    if(length(parents) == 1){
+      ro[,i] <- ro[, i] + ro[, parents]
+    } else if(length(parents) > 1){
+      ro[,i] <- ro[, i] + rowSums(ro[, parents])
+    } else {
+      ro[, i]
+    }
+  }
+  return(ro)
+}
+
+
+nullFlow <- nullRoutingModel(sro, ssro, streamNet)
+
+plot(nullFlow[, "21647"], type="l")
+lines(flowCpp.1[[1]][, "21647"], type="l", col="red")
+
+save(flowCpp.1, file="./NewData/flowCpp.RData")
+save(nullFlow, file="./NewData/nullFlow.RData")

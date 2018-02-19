@@ -6,7 +6,7 @@
 using namespace Rcpp;
 
 // routeWaterLoop
-List routeWaterLoop(int timeLength, CharacterVector edgeIDs, IntegerVector orders, NumericVector streamLengths, NumericVector streamWidths, NumericVector streamSlopes, NumericVector aCoeffs, NumericMatrix Rsurf, NumericMatrix Rsub, String by, List parentList, int spinUpYears, int spinUpCycles, double manningN, NumericVector vMonthConv, NumericVector beaverCoeff, NumericVector hillslopeLengths);
+List routeWaterLoop(int timeLength, CharacterVector edgeIDs, IntegerVector orders, NumericVector streamLengths, NumericVector streamWidths, NumericVector streamSlopes, NumericVector aCoeffs, NumericMatrix Rsurf, NumericMatrix Rsub, String by, List parentList, int spinUpYears, int spinUpCycles, double manningN, NumericVector vMonthConv, double beaverCoeff, NumericVector hillslopeLengths);
 RcppExport SEXP _msuwcRouting_routeWaterLoop(SEXP timeLengthSEXP, SEXP edgeIDsSEXP, SEXP ordersSEXP, SEXP streamLengthsSEXP, SEXP streamWidthsSEXP, SEXP streamSlopesSEXP, SEXP aCoeffsSEXP, SEXP RsurfSEXP, SEXP RsubSEXP, SEXP bySEXP, SEXP parentListSEXP, SEXP spinUpYearsSEXP, SEXP spinUpCyclesSEXP, SEXP manningNSEXP, SEXP vMonthConvSEXP, SEXP beaverCoeffSEXP, SEXP hillslopeLengthsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -26,7 +26,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type spinUpCycles(spinUpCyclesSEXP);
     Rcpp::traits::input_parameter< double >::type manningN(manningNSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type vMonthConv(vMonthConvSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type beaverCoeff(beaverCoeffSEXP);
+    Rcpp::traits::input_parameter< double >::type beaverCoeff(beaverCoeffSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type hillslopeLengths(hillslopeLengthsSEXP);
     rcpp_result_gen = Rcpp::wrap(routeWaterLoop(timeLength, edgeIDs, orders, streamLengths, streamWidths, streamSlopes, aCoeffs, Rsurf, Rsub, by, parentList, spinUpYears, spinUpCycles, manningN, vMonthConv, beaverCoeff, hillslopeLengths));
     return rcpp_result_gen;

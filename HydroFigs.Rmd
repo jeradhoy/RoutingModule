@@ -1,0 +1,124 @@
+---
+title: "HydroFigs"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+library(zoo)
+library(reshape2)
+load("./NewData/gaugePlotData.RData")
+```
+
+```{r fig.height = 3, fig.width= 10}
+flow %>% 
+  select(date, `21647`) %>% 
+  bind_cols(select(gaugeDatMonthly, `21647`)) %>% 
+  melt(id.vars = "date") %>% 
+  ggplot() +
+    geom_path(aes(x = date, y = value, color = variable)) +
+    labs(y = "Flow (m3/sec)", x = "Year", color = "Data Source") +
+    ggtitle(filter(gaugeNames, ID == "21647")$Name) +
+    scale_color_manual(values = c("red", "black"), labels = c("Simulated", "Observed")) +
+    theme_bw() +
+    theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r fig.height = 3, fig.width= 10}
+flow %>% 
+  tail(200) %>% 
+  select(date, `21647`) %>% 
+  bind_cols(select(tail(gaugeDatMonthly, 200), `21647`)) %>% 
+  melt(id.vars = "date") %>% 
+  ggplot() +
+    geom_path(aes(x = date, y = value, color = variable)) +
+    labs(y = "Flow (m3/sec)", x = "Year", color = "Data Source") +
+    ggtitle(filter(gaugeNames, ID == "21647")$Name) +
+    scale_color_manual(values = c("red", "black"), labels = c("Simulated", "Observed")) +
+    theme_bw() +
+    theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r fig.height = 3, fig.width= 10}
+flow %>% 
+  select(date, `21206`) %>% 
+  bind_cols(select(gaugeDatMonthly, `21206`)) %>% 
+  melt(id.vars = "date") %>% 
+  ggplot() +
+    geom_path(aes(x = date, y = value, color = variable)) +
+    labs(y = "Flow (m3/sec)", x = "Year", color = "Data Source") +
+    ggtitle(filter(gaugeNames, ID == "21206")$Name) +
+    scale_color_manual(values = c("red", "black"), labels = c("Simulated", "Observed")) +
+    theme_bw() +
+    theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+
+```{r}
+ggplot() +
+  geom_path(aes(x = date, y = `21206`), data = flow, col="red") +
+  geom_path(aes(x = date, y = `21206`), data = gaugeDatMonthly, col="black") +
+  labs(y = "Flow (m3/sec)", x = "Year") +
+  ggtitle(filter(gaugeNames, ID == "21206")$Name) +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+```{r}
+sumSeasonal <- function(dat){
+
+	i <- 1
+	sumdData <- list(mam=data.frame(), jja=data.frame(), son=data.frame(), djf=data.frame())
+
+	seas <- 1
+
+	while(i <= (nrow(dat)-2)){
+			print(i)
+		if(as.numeric(format(zoo::as.yearmon(rownames(dat)[i]), "%m")) %in% c(3,6,9,12)){
+
+			sumdData[[seas]] <- rbind(sumdData[[seas]], colSums(dat[i:(i+2),]))
+			i <- i + 3
+			seas <- ifelse(seas == 4, 1, seas + 1)
+		} else {
+			i <- i + 1
+		}
+	}
+	return(lapply(sumdData, function(x){colnames(x) <- colnames(dat); rownames(x) <- unique(substr(rownames(dat), 5, 9))[1:nrow(x)];x}))
+}
+
+daymetFlowSeasSlopes <- lapply(sumSeasonal(flowCpp$qOut), FUN=function(dat){list(
+										apply(dat, 2, FUN=function(x){coef(lm(x ~ c(1:length(x))))[2]}),
+										apply(dat, 2, FUN=function(x){Kendall::MannKendall(x)[2]$sl[1]}))
+})
+```
+
+```{r}
+library(hydroGOF)
+flow[, colnames(gaugeDatMonthly)]
+gof(flow$`21647`, gaugeDatMonthly$`21647`)
+```
+
+
+
+## mNSE for Daymet histograms
+
+
+
+## Stream temp graphs
+
+## Netcdf trend maps
+
+## Whole network trend maps
+
+## Flow trend by elevation (histogram/distribution plot)
+
+## Whole netword stream temp trends
+
+## Salmonoid growth model plots
