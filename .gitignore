@@ -1,8 +1,12 @@
 .Rproj.user
 .Rhistory
 .RData
+*.RData
 .Ruserdata
-Data
-NewData
-Plots
+Data/
+NewData/
+Plots/
 *.Rproj
+*.swp
+*.swo
+*.png
