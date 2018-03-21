@@ -5,9 +5,6 @@
 #Date Created: 4/3/2015
 #Date Last Modified:
 
-
-makeRasterTrendMaps <- function()
-  
 ncdir <- ""
 
 #### Input Trend map for paper
