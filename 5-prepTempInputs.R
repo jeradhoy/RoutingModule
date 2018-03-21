@@ -1,3 +1,18 @@
+devtools::load_all("msuwcRouting")
+
+load(file="./NewData/streamNet.RData")
+
+# LPJ-Guess outputs of surface and subsurface runoff
+ncdir <- "../gye_output/"
+sroNcName <- "GYE_Day3_2016_stand_monthly_msro.nc"
+ssroNcName <- "GYE_Day3_2016_stand_monthly_mssro.nc"
+
+sroSaveLocation <- "./NewData/surfaceRunoff.csv"
+ssroSaveLocation <- "./NewData/subsurfaceRunoff.csv"
+
+sro <- AggregateMonthlyRunoff(ncFile=paste0(ncdir, sroNcName), streamNet = streamNet, startDate="1980-01-01")
+
+ssro <- AggregateMonthlyRunoff(ncFile=paste0(ncdir, ssroNcName), streamNet = streamNet, startDate="1980-01-01")
 
 snowpackNcName <- "GYE_Daymet_Paper_stand_monthly_spack.nc"
 precipNcName  <- "GYE_Daymet_Paper_stand_monthly_prcp.nc"

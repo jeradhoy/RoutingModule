@@ -215,3 +215,28 @@ dev.off()
 ## END of paper figs
 ##########################
 ```
+
+
+## Calculate seasonal trend and kendall significance
+```{r}
+daymetFlowSeasSlopes <- lapply(sumSeasonal(flowCpp$qOut), FUN=function(dat){list(
+										apply(dat, 2, FUN=function(x){coef(lm(x ~ c(1:length(x))))[2]}),
+										apply(dat, 2, FUN=function(x){Kendall::MannKendall(x)[2]$sl[1]}))
+})
+
+topoFlowSeasSlopes <- lapply(sumSeasonal(flowCppTopoWx$qOut), FUN=function(dat){list(
+										apply(dat, 2, FUN=function(x){coef(lm(x ~ c(1:length(x))))[2]}),
+										apply(dat, 2, FUN=function(x){Kendall::MannKendall(x)[2]$sl[1]}))
+})
+
+daymetTempSeasSlopes <- lapply(sumSeasonal(tempSimGyeCpp$Tw), FUN=function(dat){list(
+										apply(dat, 2, FUN=function(x){coef(lm(x ~ c(1:length(x))))[2]}),
+										apply(dat, 2, FUN=function(x){Kendall::MannKendall(x)[2]$sl[1]}))
+})
+
+topoTempSeasSlopes <- lapply(sumSeasonal(tempSimGyeCppTopoWx$Tw), FUN=function(dat){list(
+										apply(dat, 2, FUN=function(x){coef(lm(x ~ c(1:length(x))))[2]}),
+										apply(dat, 2, FUN=function(x){Kendall::MannKendall(x)[2]$sl[1]}))
+})
+```
+

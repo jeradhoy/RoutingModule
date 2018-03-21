@@ -76,37 +76,8 @@ makeHydrographs(flowCppBeaver, gaugeData, plotSeason=F, plotAnnual=F, saveGraphs
 
 flowCppTopoWx <- RouteWaterCpp(edges=edgesInBounds, catchments=catchmentsInBounds, Rsurf=surfTopoWx,  Rsub=subSurfTopoWx, spinUpCycles=100, spinUpYears=10, debugMode=F, by=setupList$timeStep, widthCoeffs=setupList$streamWidthCoeffs, manningN=.05, slopeMin=.01, aCoeffCoeff=500, beaverCoeff=1)
 
-tempSimGyeCpp <- StreamTempCpp(edges=edgesInBounds, catchments=catchmentsInBounds, RsurfSnow=gyeSnow$msroSnow, RsurfNoSnow=gyeSnow$msroNoSnow, Tair=tMeanGye, simFlow=flowCpp, defaults=setupList, by="month", outputExtraVars=T, debugMode=F, K=10, etaInt=1, prof="prof2.out", outFile=NULL)
 
-tempSimGyeCppTopoWx <- StreamTempCpp(edges=edgesInBounds, catchments=catchmentsInBounds, RsurfSnow=snowGyeTopoWx$msroSnow, RsurfNoSnow=snowGyeTopoWx$msroNoSnow, Tair=tmeanGyeTopoWx, simFlow=flowCppTopoWx, defaults=setupList, by="month", outputExtraVars=T, debugMode=F, K=10, etaInt=1, prof="prof2.out", outFile=NULL)
 
-daymetFlowSeasSlopes <- lapply(sumSeasonal(flowCpp$qOut), FUN=function(dat){list(
-										apply(dat, 2, FUN=function(x){coef(lm(x ~ c(1:length(x))))[2]}),
-										apply(dat, 2, FUN=function(x){Kendall::MannKendall(x)[2]$sl[1]}))
-})
-
-topoFlowSeasSlopes <- lapply(sumSeasonal(flowCppTopoWx$qOut), FUN=function(dat){list(
-										apply(dat, 2, FUN=function(x){coef(lm(x ~ c(1:length(x))))[2]}),
-										apply(dat, 2, FUN=function(x){Kendall::MannKendall(x)[2]$sl[1]}))
-})
-
-daymetTempSeasSlopes <- lapply(sumSeasonal(tempSimGyeCpp$Tw), FUN=function(dat){list(
-										apply(dat, 2, FUN=function(x){coef(lm(x ~ c(1:length(x))))[2]}),
-										apply(dat, 2, FUN=function(x){Kendall::MannKendall(x)[2]$sl[1]}))
-})
-
-topoTempSeasSlopes <- lapply(sumSeasonal(tempSimGyeCppTopoWx$Tw), FUN=function(dat){list(
-										apply(dat, 2, FUN=function(x){coef(lm(x ~ c(1:length(x))))[2]}),
-										apply(dat, 2, FUN=function(x){Kendall::MannKendall(x)[2]$sl[1]}))
-})
-
-########Make matrix of temp data!!! Why didn't I do this before?
-tempDataFrame <- list(Tw=as.matrix(do.call("cbind", lapply(tempListMonthly, function(x){data.frame(x[,2], row.names=x[,1])}))))
-colnames(tempDataFrame$Tw) <- names(tempListMonthly)
-
-########Make matrix of gauge data!!! Why didn't I do this before?
-gaugeDataFrame <- list(qOut=as.matrix(do.call("cbind", lapply(gaugeData, function(x){data.frame(x[,2], row.names=x[,1])}))))
-colnames(gaugeDataFrame$qOut) <- names(gaugeData)
 
 gaugeDataFrame[[1]] <- gaugeDataFrame[[1]][,apply(gaugeDataFrame[[1]], 2, function(x){length(which(!is.na(x)))}) > 24]
 tempDataFrame[[1]] <- tempDataFrame[[1]][,apply(tempDataFrame[[1]], 2, function(x){length(which(!is.na(x)))}) > 24]
@@ -521,7 +492,7 @@ points(colMeans(seasFlow[[2]]))
 points(colMeans(seasFlow[[3]]))
 points(colMeans(seasFlow[[4]]))
 
-cor.test(seasFlow$mam[1]
+cor.test(seasFlow$mam[1])
 #lm(seasFlow$mam)
 #Kendall::MannKendall(seasFlow$mam[,1])
 #summary(lm(seasFlow$mam[,1] ~ 1))
@@ -1071,7 +1042,6 @@ catchmentsToUse
 
 runHyalite("tMeanGye", objs=c("catchmentsInBounds", "setupList"), overwrite=T, oneLine=T)
 
-tMeanGye <- AggregateRunoff(ncFile="/home/jerad.hoy/snow/GYE_Daymet_Paper_stand_monthly_tmean.nc", catchmentPolygons=catchmentsInBounds, useWeights=T, sumData=F, runoffVar="tmean", startDate=setupList$simStartDate, by=setupList$timeStep, convertToDischarge=F)
 
 
 runHyalite("catchElev2", objs=c("catchmentsInBounds", "setupList"), overwrite=T, oneLine=T)
@@ -1085,6 +1055,7 @@ flowTest <- RouteWater(edges=edgesInBounds, catchments=catchmentsInBounds, Rsurf
 
 
 runHyalite("tempSimGyeK10_c", objs=c("edgesInBounds", "catchmentsInBounds", "snow", "tMeanGye", "flowGye", "setupList", "StreamTemp_c"), oneLine=T, packages="msuwcRouting", overwrite=T)
+
 
 
 tempSimGYEK10 <- StreamTemp(edges=edgesInBounds, catchments=catchmentsInBounds, RsurfSnow=snow$msroSnow, RsurfNoSnow=snow$msroNoSnow, Tair=tMeanGye, simFlow=flowGye, defaults=setupList, by="month", outputExtraVars=T, debugMode=F, K=10, etaInt=1)
