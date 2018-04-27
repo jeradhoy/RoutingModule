@@ -3,19 +3,24 @@ devtools::load_all("msuwcRouting")
 load(file="./NewData/streamNet.RData")
 
 # LPJ-Guess outputs of surface and subsurface runoff
-ncdir <- "../gye_output/"
-sroNcName <- "GYE_Day3_2016_stand_monthly_msro.nc"
-ssroNcName <- "GYE_Day3_2016_stand_monthly_mssro.nc"
+#ncdir <- "../gye_output/"
+#sroNcName <- "GYE_Day3_2016_stand_monthly_msro.nc"
+#ssroNcName <- "GYE_Day3_2016_stand_monthly_mssro.nc"
 
-sroSaveLocation <- "./NewData/surfaceRunoff.csv"
-ssroSaveLocation <- "./NewData/subsurfaceRunoff.csv"
+#sroSaveLocation <- "./NewData/surfaceRunoff.csv"
+#ssroSaveLocation <- "./NewData/subsurfaceRunoff.csv"
 
-sro <- AggregateMonthlyRunoff(ncFile=paste0(ncdir, sroNcName), streamNet = streamNet, startDate="1980-01-01")
+#sro <- AggregateMonthlyRunoff(ncFile=paste0(ncdir, sroNcName), streamNet = streamNet, startDate="1980-01-01")
 
-ssro <- AggregateMonthlyRunoff(ncFile=paste0(ncdir, ssroNcName), streamNet = streamNet, startDate="1980-01-01")
+#ssro <- AggregateMonthlyRunoff(ncFile=paste0(ncdir, ssroNcName), streamNet = streamNet, startDate="1980-01-01")
 
 snowpackNcName <- "GYE_Daymet_Paper_stand_monthly_spack.nc"
 precipNcName  <- "GYE_Daymet_Paper_stand_monthly_prcp.nc"
+
+# need  RsurfSnow=gyeSnow$msroSnow, RsurfNoSnow=gyeSnow$msroNoSnow, Tair=tMeanGye
+
+snowpackPath <- ""
+precipPath <- ""
 
 tmean <- brick("/Users/hoy/Desktop/MSUWC/Data/DriverData/GYE_Daymet_stand_monthly_tmean.nc", "tmean")
 
@@ -29,3 +34,5 @@ precip <- AggregateRunoff(ncFile=paste(ncdir, "/", precipNcName, sep=""), catchm
 
 snowpackvarname <- "spack"
 precipvarname <- "prcp"
+
+tempSimGyeCppTopoWx <- StreamTempCpp(edges=edgesInBounds, catchments=catchmentsInBounds, RsurfSnow=snowGyeTopoWx$msroSnow, RsurfNoSnow=snowGyeTopoWx$msroNoSnow, Tair=tmeanGyeTopoWx, simFlow=flowCppTopoWx, defaults=setupList, by="month", outputExtraVars=T, debugMode=F, K=10, etaInt=1, prof="prof2.out", outFile=NULL)

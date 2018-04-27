@@ -16,14 +16,15 @@ load("./NewData/gaugePlotData.RData")
 ```
 
 ```{r fig.height = 3, fig.width= 10}
+colToPlot <- "21647"
 flow %>% 
-  select(date, `21647`) %>% 
-  bind_cols(select(gaugeDatMonthly, `21647`)) %>% 
+  select(date, colToPlot) %>% 
+  bind_cols(select(gaugeDatMonthly, colToPlot)) %>% 
   melt(id.vars = "date") %>% 
   ggplot() +
     geom_path(aes(x = date, y = value, color = variable)) +
     labs(y = "Flow (m3/sec)", x = "Year", color = "Data Source") +
-    ggtitle(filter(gaugeNames, ID == "21647")$Name) +
+    ggtitle(filter(gaugeNames, ID == colToPlot)$Name) +
     scale_color_manual(values = c("red", "black"), labels = c("Simulated", "Observed")) +
     theme_bw() +
     theme(plot.title = element_text(hjust = 0.5))
@@ -31,9 +32,9 @@ flow %>%
 
 ```{r fig.height = 3, fig.width= 10}
 flow %>% 
+  select(date, colToPlot) %>% 
+  bind_cols(select(gaugeDatMonthly, colToPlot)) %>% 
   tail(200) %>% 
-  select(date, `21647`) %>% 
-  bind_cols(select(tail(gaugeDatMonthly, 200), `21647`)) %>% 
   melt(id.vars = "date") %>% 
   ggplot() +
     geom_path(aes(x = date, y = value, color = variable)) +
@@ -108,7 +109,6 @@ gof(flow$`21647`, gaugeDatMonthly$`21647`)
 
 
 ## mNSE for Daymet histograms
-
 
 
 ## Stream temp graphs

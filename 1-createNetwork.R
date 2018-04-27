@@ -64,4 +64,7 @@ streamNet$data$Area <- streamNet$data$Area*14400
 # Convert Length from decimal degrees to km
 streamNet$data$Len <- streamNet$data$Len*120
 
+# Calculate contributing area of each stream
+streamNet$data$ContribArea <- GetContribArea(streamNet$data)
+
 save(streamNet, file = streamNetSaveLocation)
