@@ -106,10 +106,7 @@ flow[, colnames(gaugeDatMonthly)]
 gof(flow$`21647`, gaugeDatMonthly$`21647`)
 ```
 
-
-
 ## mNSE for Daymet histograms
-
 
 ## Stream temp graphs
 

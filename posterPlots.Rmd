@@ -1,0 +1,163 @@
+---
+title: "PosterPlots"
+author: "Jerad Hoy"
+date: "May 15, 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Seasonal trend map for GYE summer snowpack
+```{r}
+library(raster)
+spackRast <- brick("../NcDat/gye_output/spackSlope.nc")
+plot(spackRast)
+```
+
+
+```{r}
+
+load("./NewData/gaugePlotData.RData")
+```
+
+
+```{r}
+rownames(flow) <- rownames(sro)
+sumSeasonal <- function(dat){
+
+	i <- 1
+	sumdData <- list(mam=data.frame(), jja=data.frame(), son=data.frame(), djf=data.frame())
+
+	seas <- 1
+
+	while(i <= (nrow(dat)-2)){
+			print(i)
+		if(as.numeric(format(zoo::as.yearmon(rownames(dat)[i]), "%m")) %in% c(3,6,9,12)){
+
+			sumdData[[seas]] <- rbind(sumdData[[seas]], colSums(dat[i:(i+2),]))
+			i <- i + 3
+			seas <- ifelse(seas == 4, 1, seas + 1)
+		} else {
+			i <- i + 1
+		}
+	}
+	return(lapply(sumdData, function(x){colnames(x) <- colnames(dat); rownames(x) <- unique(substr(rownames(dat), 5, 9))[1:nrow(x)];x}))
+}
+
+#Sum data to seasonal
+seasFlow <- sumSeasonal(flow)
+seasPrecip <- sumSeasonal(precip)
+seasSnow <- sumSeasonal(snowpack)
+seasSurf <- sumSeasonal(surfaceRunoff)
+seasSub <- sumSeasonal(subsurfRunoff)
+```
+
+```{r}
+load("./NewData/sro.RData")
+load("./NewData/ssro.RData")
+
+
+############### Calculate slopes for seasonal data
+precipSeasSlopes <- lapply(seasPrecip, FUN=function(dat){list(
+										apply(dat, 2, FUN=function(x){coef(lm(x ~ c(1:length(x))))[2]}),
+										apply(dat, 2, FUN=function(x){Kendall::MannKendall(x)[2]$sl[1]}))
+})
+flowSeasSlopes <- lapply(seasFlow, FUN=function(dat){list(
+										apply(dat, 2, FUN=function(x){coef(lm(x ~ c(1:length(x))))[2]}),
+										apply(dat, 2, FUN=function(x){Kendall::MannKendall(x)[2]$sl[1]}))
+})
+snowSeasSlopes <- lapply(seasSnow, FUN=function(dat){list(
+										apply(dat, 2, FUN=function(x){coef(lm(x ~ c(1:length(x))))[2]}),
+										apply(dat, 2, FUN=function(x){Kendall::MannKendall(x)[2]$sl[1]}))
+})
+surfSeasSlopes <- lapply(seasSurf, FUN=function(dat){list(
+										apply(dat, 2, FUN=function(x){coef(lm(x ~ c(1:length(x))))[2]}),
+										apply(dat, 2, FUN=function(x){Kendall::MannKendall(x)[2]$sl[1]}))
+})
+subSeasSlopes <- lapply(seasSub, FUN=function(dat){list(
+										apply(dat, 2, FUN=function(x){coef(lm(x ~ c(1:length(x))))[2]}),
+										apply(dat, 2, FUN=function(x){Kendall::MannKendall(x)[2]$sl[1]}))
+})
+
+plotSeasonalMaps <- function(seasSlopes, varName="", savePlots=F, plotSignifOnly=T, plotCatchs=T, pause=F, plotTogether=T, revColors=F){
+  
+	if(plotTogether){
+	   if(savePlots){
+			png(paste0("/Users/hoy/Desktop/streamFigs/", "Gye", ifelse(plotCatchs, "Catch", "Edge"), varName, ifelse(plotSignifOnly, "Signif", ""), "Seasonal", "Trends", ".png"), width=1000, height=350)
+	   }
+		#par(mfrow=c(1,4))
+	}
+
+	for(i in c(4,1,2,3)){
+		if(!plotTogether){
+			if(savePlots){
+				png(paste0("/Users/hoy/Desktop/streamFigs/", "Gye", ifelse(plotCatchs, "Catch", "Edge"), varName, ifelse(plotSignifOnly, "Signif", ""), toupper(names(seasSlopes)[i]), "Trends", ".png"), width=1000, height=1000)
+			}
+			par(mfrow=c(1,1))
+		}
+		colsForRamp <- c("darkred", "red4", "red1", "grey", "blue1", "blue4", "darkblue")
+		if(revColors){
+			colsForRamp <- rev(colsForRamp)
+		}
+		colRamp <- colorRampPalette(colsForRamp)
+		#colRamp <- colorRampPalette(c("grey", "grey", "grey", "grey", "grey", "grey", "grey", "yellow", "red"))
+		#colRamp <- colorRampPalette(c(rep("grey", 18), "yellow", "red"))
+		#colRamp <- colorRampPalette(c("grey", "grey", "grey", "grey", "grey", "yellow", "red"))
+
+		cols <- colRamp(201)[findInterval(seasSlopes[[i]][[1]], seq(-1,1, .01))]
+		#cols <- rev(colRamp(101))[findInterval(seasSlopes[[i]][[2]], seq(0,1, .01), left.open=T)]
+
+
+		if(plotSignifOnly){
+			cols <- ifelse(seasSlopes[[i]][[2]] < 0.1, cols, "grey")
+		}
+
+		if(plotCatchs){
+			plot(catchmentsInBounds, col=cols, border=NA)
+		} else {
+			plot(edgesInBounds, col=cols)
+		}
+
+		plot(rast, col=colRamp(1000), axes=F, box=F, legend.width=2, zlim=zlimit, zlimcol="darkred", legend.only=T, add=T)
+
+		title(main=paste0(toupper(names(seasSlopes)[i]), varName, " Trends"), cex.main=2)
+		#legend("bottomleft", lty=1, legend=c("Decreasing Trend", "Stable or Increasing Trend"), col=c("red", "blue"))
+
+		if(savePlots && !plotTogether) dev.off()
+		if(pause) readline()
+	}
+		if(savePlots && plotTogether) dev.off()
+}
+
+colRamp <- colorRampPalette(c("darkred", "red4", "red1", "yellow", "blue1", "blue4", "darkblue"))
+colRamp <- colorRampPalette(c("grey", "red", "darkred"))
+colRamp <- colorRampPalette(c(rep("grey", 12), "yellow", "red"))
+color.bar(rev(colRamp(101)), 0, 1)
+
+color.bar <- function(lut, min, max=-min, nticks=11, ticks=seq(min, max, len=nticks), title='') {
+	scale = (length(lut)-1)/(max-min)
+
+	#dev.new(width=1.75, height=5)
+	plot(c(0,10), c(min,max), type='n', bty='n', xaxt='n', xlab='', yaxt='n', ylab='', main=title)
+	axis(2, ticks, las=1)
+	for (i in 1:(length(lut)-1)) {
+		y = (i-1)/scale + min
+		rect(0,y,10,y+1/scale, col=lut[i], border=NA)
+	}
+}
+
+color.bar(colRamp(201), -1)
+
+plotSignif <- F
+plotTogether <- T
+
+plotSeasonalMaps(flowSeasSlopes, varName="Streamflow", savePlots=F, plotSignifOnly=plotSignif, plotCatchs=F, pause=F, plotTogether=plotTogether)
+plotSeasonalMaps(snowSeasSlopes, varName="Snowpack", savePlots=F, plotSignifOnly=plotSignif, plotCatchs=T, pause=F, plotTogether=plotTogether)
+plotSeasonalMaps(precipSeasSlopes, varName="Precip", savePlots=F, plotSignifOnly=plotSignif, plotCatchs=T, pause=F, plotTogether=plotTogether)
+plotSeasonalMaps(surfSeasSlopes, varName="Surface Runoff", savePlots=F, plotSignifOnly=plotSignif, plotCatchs=T, pause=F, plotTogether=plotTogether)
+plotSeasonalMaps(subSeasSlopes, varName="Subsurface Runoff", savePlots=F, plotSignifOnly=plotSignif, plotCatchs=T, pause=F, plotTogether=plotTogether)
+```
+
+
