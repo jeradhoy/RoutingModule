@@ -9,6 +9,13 @@ catchmentShapefile <- "./NewData/Shapefiles/GYE_Cathments_Clipped"
 edgesShapefile <- "./NewData/Shapefiles/GYE_DrainageLine2"
 streamNetSaveLocation <- "./NewData/streamNet.RData"
 
+# Subset catchments to only include ones without missing values in raster
+#catchmentShapefile <- "./NewData/Shapefiles/GYE_Catchments"
+catchments <- st_read(dsn=catchmentShapefile, stringsAsFactors=F)
+rastVelox <- velox::velox("../NcDat/gye_output/intercept.nc")
+vals <- rastVelox$extract(sp=catchments)
+catchments <- catchments[!is.na(vals),]
+
 # Read in edges and catchments
 catchments <- st_read(dsn=catchmentShapefile, stringsAsFactors=F)
 edges <- st_read(dsn=edgesShapefile, stringsAsFactors=F)
@@ -87,3 +94,12 @@ devtools::load_all("msuwcRouting")
 streamNet$ContribArea <- GetContribArea(streamNet)
 
 save(streamNet, file = streamNetSaveLocation)
+
+
+
+
+
+
+
+
+

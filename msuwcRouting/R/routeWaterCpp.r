@@ -24,9 +24,7 @@
 #' @name RouteWater
 #' @export
 
-RouteWaterCpp <- function(streamNet, Rsurf, Rsub, spinUpCycles=0, spinUpYears=10, debugMode=F, by="day", widthCoeffs=c(.3, .6), manningN=.07, slopeMin=.01, aCoeffCoeff=3, outputExtraVars=T, etaInt=10, beaverCoeff=1){ 
-  
-  streamDat <- streamNet$data
+RouteWaterCpp <- function(streamDat, Rsurf, Rsub, spinUpCycles=0, spinUpYears=10, debugMode=F, by="day", widthCoeffs=c(.3, .6), manningN=.07, slopeMin=.01, aCoeffCoeff=3, outputExtraVars=T, etaInt=10, beaverCoeff=1){ 
   
   # Sum areas to get contributing areas, and convert to
   contribArea <- GetContribArea(streamDat)
